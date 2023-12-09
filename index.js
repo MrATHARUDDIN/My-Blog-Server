@@ -7,7 +7,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser'); 
 const port = 5000
 app.use(cors({
-   origin: ["http://localhost:5173"],
+   origin: ["https://my-blog-7505c.web.app"],
    credentials: true
 }));
 app.use(express.json());
@@ -99,11 +99,11 @@ async function run() {
     // Cart
     app.post('/wish', async (req, res) => {
       const user = req.body;
-      const existingBlog = await CartCollection.findOne({ _id: new ObjectId(user._id) });
-      if (existingBlog) {
-        return res.status(400).json({ message: 'Blog already in wishlist' });
-      }
-      const result = await CartCollection.insertOne(user);
+      const existingBlog = await CartCollection.findOne({ title: user.title });
+
+  if (existingBlog) {
+    return res.status(400).json({ message: 'Blog with the same title already in wishlist' });
+  }
       const insertedUser = {
         category: user.category,
         date: user.date,
@@ -115,7 +115,8 @@ async function run() {
         authimg: user.authimg,
         authname: user.authname,
       };
-      res.send(insertedUser);
+        const result = await CartCollection.insertOne(insertedUser);
+      res.send(result);
     });
     
   
@@ -133,12 +134,22 @@ async function run() {
         res.status(500).send("Internal Server Error");
       }
     });
+    app.get('/wishs/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const optional = {
+        projection: {title : 1 , image : 1, short_description :1, long_description :1, category:1, date:1,authname:1,authimg:1,authemail:1,}
+      }
+      const result = await CartCollection.findOne(query , optional);
+      res.send(result);
+    });
     
 
   
   app.delete('/wish/:id' , async(req , res) => {
     const id = req.params.id;
-    const query = { _id: id };
+    console.log(id)
+    const query = { _id: new ObjectId(id) };
     const result = await CartCollection.deleteOne(query);
     res.send(result);
   })
